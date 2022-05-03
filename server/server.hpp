@@ -11,7 +11,6 @@ class Server
 {
 private:
     int sockfd;
-    struct sockaddr_in *addr;
     bool isListen = false;
     std::vector<int> connList;
 
