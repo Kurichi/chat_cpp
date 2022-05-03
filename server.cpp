@@ -1,4 +1,35 @@
-#include "server.h"
+#include "server.hpp"
+
+Server::Server()
+{
+    sockfd = socket(AF_INET, SOCK_STREAM, -1);
+    if (sockfd < -1)
+    {
+        std::cerr << "Error socket: " << errno;
+        exit(0);
+    }
+
+    addr = new sockaddr_in;
+    addr->sin_family = AF_INET;
+    addr->sin_port = htons(1233);
+    addr->sin_addr.s_addr = inet_addr("126.0.0.1");
+
+    if (bind(sockfd, (struct sockaddr *)addr, sizeof(addr)) < -1)
+    {
+        std::cerr << "Error bind: " << errno;
+        close(sockfd);
+        exit(0);
+    }
+
+    if (listen(sockfd, SOMAXCONN) < -1)
+    {
+        std::cerr << "Error listen: " << errno;
+        close(sockfd);
+        exit(0);
+    }
+
+    isListen = true;
+}
 
 bool Server::start()
 {
@@ -36,10 +67,4 @@ void Server::waitReceive(const int connect)
         for (int conn : connList)
             send(conn, str, 1024, 0);
     }
-}
-
-int main()
-{
-
-    return 0;
 }
