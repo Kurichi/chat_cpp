@@ -17,7 +17,9 @@ private:
 public:
     Server();
 
-    bool start();
+    void start();
 
-    void waitReceive(const int connect);
+    void waitConnection();
+
+    void waitReceive();
 };
