@@ -22,9 +22,7 @@ public:
 
     void receive();
 
-    char *encode(std::string t, std::string msg);
-
-    std::string decode(char *msg);
+    const char *encode(std::string t, std::string msg);
 
     void _send();
 };

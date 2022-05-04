@@ -35,74 +35,35 @@ void Client::start()
 
 void Client::receive()
 {
-    int fd = 0;
-    fd_set rfds;
-    struct timeval tv;
-    int retval;
-
     while (true)
     {
         char str[1024];
         recv(sockfd, str, 1024, 0);
         std::cout << str << std::endl;
-        //     FD_ZERO(&rfds);
-        // FD_SET(fd, &rfds);
-        // tv.tv_sec = 0.5;
-        // tv.tv_usec = 500000;
-        // retval = select(fd + 1, &rfds, NULL, NULL, &tv);
-
-        // if (retval < 0)
-        // {
-        // std::cerr << "Error select: " << errno << std::endl;
-        // }
-        // else if (retval > 0)
-        // {
-        // char str[1024];
-        // recv(sockfd, str, 1024, 0);
-        // std::cout << str << std::endl;
-        // }
-        // sleep(0.1);
     }
 }
 
-char *Client::encode(std::string t, std::string msg)
+const char *Client::encode(std::string t, std::string msg)
 {
     std::string message;
-    message = "{\"username\":\"" + username + "\",";
-    message += "\"command-type\":\"" + t + "\",";
-    message += "\"message\":\"" + msg + "\"}\0";
-
-    return (message.c_str());
-}
-
-std::string Client::decode(char *msg)
-{
-    std::string name, comType, message;
+    if (t == "command")
+        message = username + " " + msg + "...";
+    else
+        message = username + " : " + msg;
+    return message.c_str();
 }
 
 void Client::_send()
 {
-    int fd = 0;
-    fd_set rfds;
-    struct timeval tv;
-    int retval;
     while (true)
     {
-        // FD_ZERO(&rfds);
-        // FD_SET(fd, &rfds);
-        // tv.tv_sec = 0.5;
-        // tv.tv_usec = 50000;
-        // retval = select(fd + 1, &rfds, NULL, NULL, &tv);
-        // if (retval < 0)
-        //{
-        // std::cerr << "Error select: " << errno << std::endl;
-        //}
-        // else if (retval > 0)
-        //{
-        char str[1024];
+        std::string str;
         std::cin >> str;
-        std::cout << str << std::endl;
-        send(sockfd, str, 1024, 0);
-        //}
+        const char *msg;
+        if (str[0] == '/')
+            msg = encode("command", str);
+        else
+            msg = encode("text", str);
+        send(sockfd, msg, 1024, 0);
     }
 }

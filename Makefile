@@ -9,3 +9,11 @@ server: ./server/server_main.cpp ./server/server.cpp ./server/server.hpp
 
 client: ./client/client_main.cpp ./client/client.cpp ./client/client.hpp
 	$(CXX) $(CXXFLAGS) $(INCDIRS) -o ./client/client ./client/client_main.cpp -pthread
+
+clean:
+	rm ./server/server ./client/client
+
+all:
+	make clean
+	make client
+	make server
