@@ -97,7 +97,6 @@ void Server::waitReceive()
             {
                 char str[1024];
                 recv(connect, str, 1024, 0);
-                std::cout << str << std::endl;
 
                 for (int conn : connList)
                     send(conn, str, 1024, 0);
@@ -130,12 +129,30 @@ void Server::command(std::string str)
         for (int conn : connList)
             std::cout << conn << std::endl;
     }
-    else if (str == "/kill all")
-    {
-        for (int conn : connList)
-            close(conn);
-    }
     else if (str == "/kill")
+    {
+        std::cin >> str;
+        if (str == "all")
+        {
+            for (int conn : connList)
+                close(conn);
+            std::cout << "kill all" << std::endl;
+        }
+        else
+        {
+            int connect = atoi(str.c_str());
+            for (int conn : connList)
+            {
+                if (connect == conn)
+                {
+                    close(conn);
+                    std::cout << "kill " << connect << std::endl;
+                    return;
+                }
+            }
+            std::cout << "Error" << std::endl;
+        }
+    }
 }
 
 void Server::command(char *str)

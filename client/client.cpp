@@ -1,6 +1,7 @@
 #include "client.hpp"
 #include <sys/select.h>
 #include <ctime>
+#include <string.h>
 
 Client::Client()
 {
@@ -23,6 +24,9 @@ void Client::setup()
 {
     std::cout << "Your name: ";
     std::cin >> username;
+    char str[1024] = "/join ";
+    strcat(str, username.c_str());
+    send(sockfd, str, 1024, 0);
 }
 
 void Client::start()
@@ -43,27 +47,35 @@ void Client::receive()
     }
 }
 
-const char *Client::encode(std::string t, std::string msg)
+char *Client::createCommand(char *msg)
 {
-    std::string message;
-    if (t == "command")
-        message = username + " " + msg + "...";
-    else
-        message = username + " : " + msg;
-    return message.c_str();
+    char *str = new char[1024];
+    if (!strcmp(msg, "/quit"))
+    {
+        strcpy(str, "/quit ");
+        strcat(str, username.c_str());
+    }
+
+    return str;
+}
+
+char *Client::encode(char *msg)
+{
+    if (*msg == '/')
+        return createCommand(msg);
+    char *str = new char[1024];
+    strcpy(str, username.c_str());
+    strcat(str, " > ");
+    strcat(str, msg);
+    return str;
 }
 
 void Client::_send()
 {
     while (true)
     {
-        std::string str;
-        std::cin >> str;
-        const char *msg;
-        if (str[0] == '/')
-            msg = encode("command", str);
-        else
-            msg = encode("text", str);
-        send(sockfd, msg, 1024, 0);
+        char str[1024];
+        std::cin.getline(str, sizeof(str));
+        send(sockfd, encode(str), 1024, 0);
     }
 }
