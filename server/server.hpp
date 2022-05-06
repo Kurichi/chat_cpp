@@ -26,6 +26,8 @@ public:
 
     void waitCommand();
 
+    void userCommand(char *str);
+
     void command(std::string str);
     void command(char *str);
 };

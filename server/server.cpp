@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "server.hpp"
 
 Server::Server()
@@ -98,8 +100,11 @@ void Server::waitReceive()
                 char str[1024];
                 recv(connect, str, 1024, 0);
 
-                for (int conn : connList)
-                    send(conn, str, 1024, 0);
+                if (*str == '/')
+                    userCommand(str);
+                else
+                    for (int conn : connList)
+                        send(conn, str, 1024, 0);
             }
         }
     }
@@ -112,6 +117,19 @@ void Server::waitCommand()
         std::string str;
         std::cin >> str;
         command(str);
+    }
+}
+
+void Server::userCommand(char *str)
+{
+    if (!strncmp(str, "/join ", 6))
+    {
+        for (int i = 0; i < sizeof("/join "); i++)
+            str++;
+        strcat(str, "joined.");
+
+        for (int conn : connList)
+            send(conn, str, 1024, 0);
     }
 }
 
