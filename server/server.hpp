@@ -13,6 +13,7 @@ private:
     int sockfd;
     bool isListen = false;
     std::vector<int> connList;
+    bool isLoop = true;
 
 public:
     Server();
@@ -22,4 +23,9 @@ public:
     void waitConnection();
 
     void waitReceive();
+
+    void waitCommand();
+
+    void command(std::string str);
+    void command(char *str);
 };

@@ -43,13 +43,15 @@ void Server::start()
 
     std::thread thdconn(&Server::waitConnection, this);
     std::thread thdrecv(&Server::waitReceive, this);
+    std::thread thdcomm(&Server::waitCommand, this);
     thdconn.join();
     thdrecv.join();
+    thdcomm.join();
 }
 
 void Server::waitConnection()
 {
-    while (true)
+    while (isLoop)
     {
         struct sockaddr_in *get_addr = new sockaddr_in;
         socklen_t len = sizeof(struct sockaddr_in);
@@ -75,8 +77,9 @@ void Server::waitReceive()
     fd_set rfds;
     struct timeval tv;
     int retval;
-    while (true)
+    while (isLoop)
     {
+        sleep(0.5);
         for (int connect : connList)
         {
             FD_ZERO(&rfds);
@@ -101,4 +104,44 @@ void Server::waitReceive()
             }
         }
     }
+}
+
+void Server::waitCommand()
+{
+    while (isLoop)
+    {
+        std::string str;
+        std::cin >> str;
+        command(str);
+    }
+}
+
+void Server::command(std::string str)
+{
+    if (str == "/stop" || str == "/quit")
+    {
+        for (int conn : connList)
+            close(conn);
+        isLoop = false;
+        close(sockfd);
+    }
+    else if (str == "/list")
+    {
+        for (int conn : connList)
+            std::cout << conn << std::endl;
+    }
+    else if (str == "/kill all")
+    {
+        for (int conn : connList)
+            close(conn);
+    }
+    else if (str == "/kill")
+}
+
+void Server::command(char *str)
+{
+    std::string s;
+    while (*str != '\0')
+        s.push_back(*str++);
+    command(s);
 }
