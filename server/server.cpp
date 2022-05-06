@@ -53,29 +53,46 @@ void Server::start()
 
 void Server::waitConnection()
 {
+    fd_set rfds;
+    struct timeval tv;
+    int retval;
     while (isLoop)
     {
-        struct sockaddr_in *get_addr = new sockaddr_in;
-        socklen_t len = sizeof(struct sockaddr_in);
-        int connect = accept(sockfd, (struct sockaddr *)get_addr, &len);
+        FD_ZERO(&rfds);
+        FD_SET(sockfd, &rfds);
+        tv.tv_sec = 1;
+        tv.tv_usec = 100000;
 
-        std::cout << "Connection: " << connect << std::endl;
+        retval = select(sockfd + 1, &rfds, NULL, NULL, &tv);
 
-        if (connect < 0)
+        if (retval < 0)
         {
-            std::cerr << "Error accept: " << errno << std::endl;
-            exit(1);
+            std::cerr << "Error select: " << errno << std::endl;
         }
+        else if (retval > 0)
+        {
+            std::cout << "afafa" << std::endl;
+            struct sockaddr_in *get_addr = new sockaddr_in;
+            socklen_t len = sizeof(struct sockaddr_in);
+            int connect = accept(sockfd, (struct sockaddr *)get_addr, &len);
 
-        connList.push_back(connect);
-        char message[] = "You connected to server";
-        send(connect, message, sizeof(message), 0);
+            std::cout << "Connection: " << connect << std::endl;
+
+            if (connect < 0)
+            {
+                std::cerr << "Error accept: " << errno << std::endl;
+                exit(1);
+            }
+
+            connList.push_back(connect);
+            char message[] = "You connected to server";
+            send(connect, message, sizeof(message), 0);
+        }
     }
 }
 
 void Server::waitReceive()
 {
-
     fd_set rfds;
     struct timeval tv;
     int retval;
@@ -84,8 +101,6 @@ void Server::waitReceive()
         sleep(0.5);
         for (int connect : connList)
         {
-            if (connect == -1)
-                continue;
             FD_ZERO(&rfds);
             FD_SET(connect, &rfds);
             tv.tv_sec = 0.1;
@@ -137,10 +152,19 @@ void Server::userCommand(int connect, char *str)
     {
         for (int i = 0; i < 6; i++)
             str++;
-        for (int i = 0; i < connList.size(); i++)
-            connList[i] = (connList[i] == connect ? -1 : connList[i]);
+        for (int i = 0; i < (int)connList.size(); i++)
+        {
+            if (connect == connList[i])
+            {
+                connList.erase(connList.begin() + i);
+                break;
+            }
+        }
         close(connect);
         strcat(str, " quited.");
+
+        for (int conn : connList)
+            send(conn, str, 1024, 0);
     }
 }
 
