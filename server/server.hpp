@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <thread>
+#include <map>
 
 class Server
 {
@@ -26,7 +27,7 @@ public:
 
     void waitCommand();
 
-    void userCommand(char *str);
+    void userCommand(int connect, char *str);
 
     void command(std::string str);
     void command(char *str);

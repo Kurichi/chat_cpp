@@ -12,6 +12,7 @@ private:
     int sockfd;
     bool isConnected = false;
     std::string username;
+    bool isLoop = true;
 
 public:
     Client();

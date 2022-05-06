@@ -84,6 +84,8 @@ void Server::waitReceive()
         sleep(0.5);
         for (int connect : connList)
         {
+            if (connect == -1)
+                continue;
             FD_ZERO(&rfds);
             FD_SET(connect, &rfds);
             tv.tv_sec = 0.1;
@@ -101,7 +103,7 @@ void Server::waitReceive()
                 recv(connect, str, 1024, 0);
 
                 if (*str == '/')
-                    userCommand(str);
+                    userCommand(connect, str);
                 else
                     for (int conn : connList)
                         send(conn, str, 1024, 0);
@@ -120,16 +122,25 @@ void Server::waitCommand()
     }
 }
 
-void Server::userCommand(char *str)
+void Server::userCommand(int connect, char *str)
 {
     if (!strncmp(str, "/join ", 6))
     {
-        for (int i = 0; i < sizeof("/join "); i++)
+        for (int i = 0; i < 6; i++)
             str++;
-        strcat(str, "joined.");
+        strcat(str, " joined.");
 
         for (int conn : connList)
             send(conn, str, 1024, 0);
+    }
+    else if (!strncmp(str, "/quit ", 6))
+    {
+        for (int i = 0; i < 6; i++)
+            str++;
+        for (int i = 0; i < connList.size(); i++)
+            connList[i] = (connList[i] == connect ? -1 : connList[i]);
+        close(connect);
+        strcat(str, " quited.");
     }
 }
 

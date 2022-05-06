@@ -39,7 +39,7 @@ void Client::start()
 
 void Client::receive()
 {
-    while (true)
+    while (isLoop)
     {
         char str[1024];
         recv(sockfd, str, 1024, 0);
@@ -54,6 +54,10 @@ char *Client::createCommand(char *msg)
     {
         strcpy(str, "/quit ");
         strcat(str, username.c_str());
+        send(sockfd, str, 1024, 0);
+        close(sockfd);
+        str = NULL;
+        isLoop = false;
     }
 
     return str;
@@ -72,7 +76,7 @@ char *Client::encode(char *msg)
 
 void Client::_send()
 {
-    while (true)
+    while (isLoop)
     {
         char str[1024];
         std::cin.getline(str, sizeof(str));
