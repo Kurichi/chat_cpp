@@ -1,5 +1,5 @@
 #include <string.h>
-
+#include <sstream>
 #include "server.hpp"
 
 Server::Server()
@@ -71,7 +71,6 @@ void Server::waitConnection()
         }
         else if (retval > 0)
         {
-            std::cout << "afafa" << std::endl;
             struct sockaddr_in *get_addr = new sockaddr_in;
             socklen_t len = sizeof(struct sockaddr_in);
             int connect = accept(sockfd, (struct sockaddr *)get_addr, &len);
@@ -85,8 +84,7 @@ void Server::waitConnection()
             }
 
             connList.push_back(connect);
-            char message[] = "You connected to server";
-            send(connect, message, sizeof(message), 0);
+            _send(connect, "You connected to server");
         }
     }
 }
@@ -114,14 +112,26 @@ void Server::waitReceive()
             }
             else if (retval > 0)
             {
-                char str[1024];
-                recv(connect, str, 1024, 0);
+                unsigned char length[4];
+                recv(connect, length, 4, 0);
+                int size = 0;
+                for (int i = 3; i >= 0; i--)
+                {
+                    size *= 16;
+                    if (length[i] < '0' || '9' < length[i])
+                        size += length[i] - 'a';
+                    else
+                        size += length[i] - '0';
+                }
+                char *tmp = (char *)malloc(size);
+                recv(connect, tmp, size, 0);
+                std::string str(tmp);
 
-                if (*str == '/')
+                if (str[0] == '/')
                     userCommand(connect, str);
                 else
                     for (int conn : connList)
-                        send(conn, str, 1024, 0);
+                        _send(conn, str);
             }
         }
     }
@@ -137,21 +147,22 @@ void Server::waitCommand()
     }
 }
 
-void Server::userCommand(int connect, char *str)
+void Server::userCommand(int connect, std::string str)
 {
-    if (!strncmp(str, "/join ", 6))
+    std::vector<std::string> v;
+    std::string s;
+    std::stringstream ss{str};
+    while (getline(ss, s, ' '))
+        v.push_back(s);
+    if (v[0] == "/join")
     {
-        for (int i = 0; i < 6; i++)
-            str++;
-        strcat(str, " joined.");
+        str = v[1] + " joined.";
 
         for (int conn : connList)
-            send(conn, str, 1024, 0);
+            _send(conn, str);
     }
-    else if (!strncmp(str, "/quit ", 6))
+    else if (v[0] == "/quit")
     {
-        for (int i = 0; i < 6; i++)
-            str++;
         for (int i = 0; i < (int)connList.size(); i++)
         {
             if (connect == connList[i])
@@ -161,10 +172,10 @@ void Server::userCommand(int connect, char *str)
             }
         }
         close(connect);
-        strcat(str, " quited.");
+        str = v[1] + " quited...";
 
         for (int conn : connList)
-            send(conn, str, 1024, 0);
+            _send(conn, str);
     }
 }
 
@@ -173,9 +184,12 @@ void Server::command(std::string str)
     if (str == "/stop" || str == "/quit")
     {
         for (int conn : connList)
+        {
+            _send(conn, "/close");
             close(conn);
-        isLoop = false;
+        }
         close(sockfd);
+        isLoop = false;
     }
     else if (str == "/list")
     {
@@ -188,7 +202,10 @@ void Server::command(std::string str)
         if (str == "all")
         {
             for (int conn : connList)
+            {
+                _send(conn, "/close");
                 close(conn);
+            }
             std::cout << "kill all" << std::endl;
         }
         else
@@ -198,6 +215,7 @@ void Server::command(std::string str)
             {
                 if (connect == conn)
                 {
+                    _send(conn, "/close");
                     close(conn);
                     std::cout << "kill " << connect << std::endl;
                     return;
@@ -214,4 +232,23 @@ void Server::command(char *str)
     while (*str != '\0')
         s.push_back(*str++);
     command(s);
+}
+
+void Server::_send(int connect, std::string str)
+{
+    int tmp = str.size();
+    if (tmp == 0)
+        return;
+    unsigned char length[4];
+    for (int i = 0; i < 4; i++)
+    {
+        int val = tmp % 16;
+        if (val < 10)
+            length[i] = '0' + val;
+        else
+            length[i] = 'a' + val;
+        tmp /= 16;
+    }
+    send(connect, length, 4, 0);
+    send(connect, str.c_str(), str.size(), 0);
 }

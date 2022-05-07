@@ -4,12 +4,14 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <string>
-#include <thread>
 
 class Client
 {
 private:
+    const uint16_t PORT = 12345;
+    const char *IP = "127.0.0.1";
     int sockfd;
+    struct sockaddr_in addr = *(new sockaddr_in);
     bool isConnected = false;
     std::string username;
     bool isLoop = true;
@@ -23,9 +25,13 @@ public:
 
     void receive();
 
-    char *createCommand(char *msg);
+    std::string createCommand(std::string str);
 
-    char *encode(char *msg);
+    std::string encode(std::string str);
 
-    void _send();
+    void waitEnterMessage();
+
+    void _send(std::string str);
+
+    bool commandCheck(std::string str);
 };

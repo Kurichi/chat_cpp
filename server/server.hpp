@@ -27,8 +27,10 @@ public:
 
     void waitCommand();
 
-    void userCommand(int connect, char *str);
+    void userCommand(int connect, std::string str);
 
     void command(std::string str);
     void command(char *str);
+
+    void _send(int connect, std::string str);
 };
